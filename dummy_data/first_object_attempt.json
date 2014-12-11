@@ -1,0 +1,17 @@
+{
+  "context": {
+    "url": "www.passeidireto.com"
+  },
+  "actions" :[
+    {
+      "type" : "element.selection",
+      "selector": "#js_login_button"
+    }
+  ],
+  "asserts" :[
+    {
+      "type" : "element.exists",
+      "selector": "#js_login_button"
+    }
+  ]
+}

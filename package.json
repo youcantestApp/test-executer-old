@@ -10,6 +10,7 @@
   "devDependencies": {
     "amqplib": "^0.3.0",
     "chai": "^1.10.0",
+    "q": "^1.1.2",
     "webdriverio": "^2.4.0"
   },
   "scripts": {

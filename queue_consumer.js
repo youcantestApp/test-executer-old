@@ -3,7 +3,7 @@
 var amqp = require('amqplib');
 
 var assertBuilder = require('./services/assertBuilderService');
-
+var fs = require('fs');
 //CONFIGS
 
 var PREFETCH_NUMBER = 1;
@@ -46,8 +46,10 @@ var queueConfiguration = {
                 var seconds = body.split('.').length - 1;
 
                 try {
-                    assertBuilder.test();
-                    //var object = JSON.parse(body);
+                    fs.readFile('./dummy_data/first_object_attempt.json', 'utf8', function (err, data) {
+                        var object = JSON.parse(data);
+                        assertBuilder.build(object);
+                    });
                 }
                 catch(ex) {
                     console.log("some error found", ex);

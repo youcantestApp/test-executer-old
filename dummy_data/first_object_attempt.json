@@ -1,17 +1,28 @@
 {
   "context": {
-    "url": "www.passeidireto.com"
+    "url": "http://www.passeidireto.com"
   },
   "actions" :[
     {
-      "type" : "element.selection",
+      "type" : "click",
       "selector": "#js_login_button"
+    },
+    {
+      "type" : "setValue",
+      "selector": "#Email",
+      "value": "test@test.com"
     }
   ],
   "asserts" :[
     {
-      "type" : "element.exists",
-      "selector": "#js_login_button"
+      "type" : "hasClass",
+      "selector": "#js_login_button",
+      "value": "active"
+    },
+    {
+      "type" : "assertValue",
+      "selector": "#Email",
+      "value": "test@test.com"
     }
   ]
 }

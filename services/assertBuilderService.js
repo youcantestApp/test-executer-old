@@ -24,55 +24,89 @@ return function() {
 function build(object) {
     initialize();
 
-    var actionPromises = [];
-    object.actions.forEach(function(action) {
-        var fn = function () {
-            return webdriver[action.type](action);
-        };
+    var sequencePromises = [];
 
-        actionPromises.push(fn);
-    });
-
-    var assertPromises = [];
-    object.asserts.forEach(function (assert) {
-        var fn = function () {
-            return webdriver[assert.type](assert);
-        };
-
-        assertPromises.push(fn);
-    });
-
-    var promise = q("blah");
+    var errors = [];
 
     var initialFn = function () {
         console.log("first");
         return webdriver.openUrl(object.context.url);
     };
 
-    promise.then(initialFn);
+    sequencePromises.push(initialFn);
 
-    actionPromises.forEach(function(fn) {
-        promise.then(fn);
+    object.actions.forEach(function(action) {
+        var fn = (function () {
+            var _action = action;
+            return function () {
+                var localPromise = q.defer();
+                webdriver[action.type](_action).then(function (res) {
+                    localPromise.resolve(res);
+                },function(reason){
+                    errors.push(reason);
+                });
+
+                return localPromise.promise;
+            }
+        })();
+
+        sequencePromises.push(fn);
     });
 
-    assertPromises.forEach(function(fn) {
-        promise.then(fn);
-    });
+    object.asserts.forEach(function (assert) {
+        var fn = (function () {
+            var _assert = assert;
+            return function() {
+                var localPromise = q.defer();
+                webdriver[assert.type](_assert).then(function (res) {
+                    localPromise.resolve(res);
+                },function(reason){
+                    errors.push(reason);
+                });
 
+                return localPromise.promise;
+            }
+        })();
+
+        sequencePromises.push(fn);
+    });
 
     var last = function() {
-        var defer = q.defer();
-        setTimeout(function () {
+        var localPromise = q.defer();
+        webdriver.done().then(function (res) {
             console.log("ultima");
-            defer.resolve();
-        }, 1000);
+            console.log(errors);
+            localPromise.resolve(res);
+        },function(reason){
+            console.log(reason);
+        });
 
-        return defer.promise;
-    }
+        return localPromise.promise;
+    };
 
-    promise.then(last);
+    sequencePromises.push(last);
 
-    //defer.resolve(object);
+    var initialDefer = q.defer();
+
+    var promise = (function () {
+        console.log("initial");
+        return initialDefer.promise;
+    })();
+
+    var result = q();
+    sequencePromises.forEach(function(fn) {
+        result = result.then(function () {
+            fn();
+        });
+    });
+
+    console.log("chained...will start in 1 seconds");
+
+    promise.then(result);
+
+    setTimeout(function () {
+        initialDefer.resolve();
+    }, 1000);
 };
 
 

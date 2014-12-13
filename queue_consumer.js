@@ -44,19 +44,19 @@ var queueConfiguration = {
 
                 var body = message.content.toString();
 
-                var seconds = body.split('.').length - 1;
-
-                var object;
                 try {
                     fs.readFile('./dummy_data/first_object_attempt.json', 'utf8', function (err, data) {
-                        object = JSON.parse(data);
-                        var defer = assertBuilder.buildTestSequence(object);
+                        var object = JSON.parse(data);
+                        var defer = assertBuilder.executeTestSequence(object);
 
                         defer.then(function (obj) {
                             console.log(obj.dones, obj.errors);
                             channel.ack(message);
 
                             console.log("[x] Done");
+                        }).then(function () {
+                            "use strict";
+                            assertBuilder.finishTestSequence();
                         });
                     });
                 }

@@ -11,13 +11,9 @@ var q = require('q');
 
 var webdriver;
 var initialize = (function () {
-var initialized = false;
 return function() {
-    if(initialized) return;
-
     webdriver = new WebDriverService().getInstance();
     webdriver.init();
-    initialized = true;
 }
 })();
 
@@ -32,6 +28,7 @@ function executeTestSequence(object) {
         dones = [];
 
     var initialFn = function () {
+        console.log("primeiro passo");
         return webdriver.openUrl(object.context.url);
     };
     sequencePromises.push(initialFn);
@@ -77,7 +74,7 @@ function executeTestSequence(object) {
 
     var last = function() {
         return webdriver.done().then(function (res) {
-            console.log("ultima");
+            console.log("ultimo passo");
             finishTestExecutionDefer.resolve({ dones: dones, errors: errors });
         },function(reason){
             console.log(reason);
@@ -111,5 +108,12 @@ function executeTestSequence(object) {
     return finishTestExecutionDefer.promise;
 };
 
+function finishTestSequence() {
+    "use strict";
 
-module.exports.build = executeTestSequence;
+    return webdriver.end();
+}
+
+
+module.exports.executeTestSequence = executeTestSequence;
+module.exports.finishTestSequence = finishTestSequence;

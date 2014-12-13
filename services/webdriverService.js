@@ -8,7 +8,7 @@ var q = require('q');
 
 var options = {
     desiredCapabilities: {
-        browserName: 'chrome'
+        browserName: 'phantomjs'
     }
 };
 
@@ -20,7 +20,7 @@ var WebDriveService = (function () {
         clientInstance = webdriverio.remote(options);
     };
 
-    function getClient () {
+    function getClient() {
         return clientInstance;
     };
 
@@ -46,131 +46,111 @@ var WebDriveService = (function () {
 
     WebDriveService.prototype.openUrl = function (url) {
         var defer = q.defer();
-        getClient().url(url,function(err, res) {
-            if(res && res.state == "success")
+        getClient().url(url, function (err, res) {
+            if (res && res.state == "success")
                 defer.resolve(res.state);
             else
-                defer.reject(error.message);
+                defer.reject(err);
         });
 
         return defer.promise;
     };
 
     WebDriveService.prototype.click = function (action) {
-        console.log("start click");
-
         var defer = q.defer();
 
-        getClient().click(action.selector,
-            (function (deferr) {
-                var _defer = deferr;
-                return function(err, source) {
-                    console.log("clicked");
-                    if (err)
-                        _defer.reject("error onclick");
-                    else
-                        _defer.resolve("clicked");
+        getClient().click(action.selector, function (err, source) {
+            console.log("clicked");
+            if (err)
+                defer.reject("error onclick");
+            else
+                defer.resolve("clicked");
 
-                }
-            })(defer)
-        );
+        });
 
         return defer.promise;
     };
 
     WebDriveService.prototype.setValue = function (action) {
-        console.log("start setvalue");
-
         var defer = q.defer();
 
-        getClient().addValue(action.selector,action.value,
-            (function (deferr) {
-                var _defer = deferr;
-                return function (err, source) {
-                    console.log("add value");
-                    if (err)
-                        _defer.reject("error add valued");
-                    else
-                        _defer.resolve("value added");
-                };
-            })(defer)
-        );
+        getClient().addValue(action.selector, action.value, function (err, source) {
+            console.log("add value");
+            if (err)
+                defer.reject("error add valued");
+            else
+                defer.resolve("value added");
+        });
 
         return defer.promise;
     };
 
     WebDriveService.prototype.hasClass = function (assert) {
-        console.log("start hasclass");
-
         var defer = q.defer();
 
-        getClient().getAttribute(assert.selector,'class',
-            (function (deferr) {
-                var _defer = deferr;
-                return function(err, attr) {
-                    console.log("hasClass");
-                    if (err)
-                        _defer.reject("error");
-                    else if (!attr)
-                        _defer.reject("has no class");
-                    else {
-                        var found = false;
-                        attr.split(" ").forEach(function (className) {
-                            if (className == assert.value) {
-                                found = true;
-                                return false;
-                            }
-                        });
-
-                        if (found)
-                            _defer.resolve("class found");
-                        else
-                            _defer.reject("class not found");
+        getClient().getAttribute(assert.selector, 'class', function (err, attr) {
+            console.log("hasClass");
+            if (err)
+                defer.reject("error");
+            else if (!attr)
+                defer.reject("has no class");
+            else {
+                var found = false;
+                attr.split(" ").forEach(function (className) {
+                    if (className == assert.value) {
+                        found = true;
+                        return false;
                     }
-                }
-            })(defer)
-        );
+                });
 
+                if (found)
+                    defer.resolve("class found");
+                else
+                    defer.reject("class not found");
+            }
+        });
 
         return defer.promise;
     };
 
     WebDriveService.prototype.assertValue = function (assert) {
-        console.log("start assertvalue");
-
         var defer = q.defer();
 
-        getClient().getValue(assert.selector,
-            (function (deferr) {
-                var _defer = deferr;
-
-                return function (err, value) {
-                    console.log("hasText");
-                    if (err)
-                        _defer.reject("error");
-                    else {
-                        if (value == assert.value)
-                            _defer.resolve("value found");
-                        else
-                            _defer.reject("value not found");
-                    }
-                }
-            })(defer)
-        );
+        getClient().getValue(assert.selector, function (err, value) {
+            console.log("hasText");
+            if (err)
+                defer.reject("error");
+            else {
+                if (value == assert.value)
+                    defer.resolve("value found");
+                else
+                    defer.reject("value not found");
+            }
+        });
 
         return defer.promise;
     };
 
     WebDriveService.prototype.done = function () {
-        console.log("done start");
-
         var defer = q.defer();
 
         var doneFn = function () {
+            console.log("done");
             defer.resolve('finished');
         };
 
         getClient().call(doneFn);
+
+        return defer.promise;
+    };
+
+    WebDriveService.prototype.end = function () {
+        var defer = q.defer();
+
+        getClient().end(function () {
+            console.log("closed");
+            defer.resolve('closed');
+        });
 
         return defer.promise;
     };

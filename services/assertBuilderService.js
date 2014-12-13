@@ -21,18 +21,19 @@ return function() {
 }
 })();
 
-function build(object) {
+function executeTestSequence(object) {
     initialize();
+
+    var finishTestExecutionDefer = q.defer();
 
     var sequencePromises = [];
 
-    var errors = [];
+    var errors = [],
+        dones = [];
 
     var initialFn = function () {
-        console.log("first");
         return webdriver.openUrl(object.context.url);
     };
-
     sequencePromises.push(initialFn);
 
     object.actions.forEach(function(action) {
@@ -41,6 +42,7 @@ function build(object) {
             return function () {
                 var localPromise = q.defer();
                 webdriver[action.type](_action).then(function (res) {
+                    dones.push(res);
                     localPromise.resolve(res);
                 },function(reason){
                     errors.push(reason);
@@ -59,6 +61,7 @@ function build(object) {
             return function() {
                 var localPromise = q.defer();
                 webdriver[assert.type](_assert).then(function (res) {
+                    dones.push(res);
                     localPromise.resolve(res);
                 },function(reason){
                     errors.push(reason);
@@ -71,17 +74,14 @@ function build(object) {
         sequencePromises.push(fn);
     });
 
+
     var last = function() {
-        var localPromise = q.defer();
-        webdriver.done().then(function (res) {
+        return webdriver.done().then(function (res) {
             console.log("ultima");
-            console.log(errors);
-            localPromise.resolve(res);
+            finishTestExecutionDefer.resolve({ dones: dones, errors: errors });
         },function(reason){
             console.log(reason);
         });
-
-        return localPromise.promise;
     };
 
     sequencePromises.push(last);
@@ -107,7 +107,9 @@ function build(object) {
     setTimeout(function () {
         initialDefer.resolve();
     }, 1000);
+
+    return finishTestExecutionDefer.promise;
 };
 
 
-module.exports.build = build;
+module.exports.build = executeTestSequence;

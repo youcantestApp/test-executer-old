@@ -4,6 +4,7 @@ var amqp = require('amqplib');
 
 var assertBuilder = require('./services/assertBuilderService');
 var fs = require('fs');
+var q = require('q');
 //CONFIGS
 
 var PREFETCH_NUMBER = 1;
@@ -45,10 +46,18 @@ var queueConfiguration = {
 
                 var seconds = body.split('.').length - 1;
 
+                var object;
                 try {
                     fs.readFile('./dummy_data/first_object_attempt.json', 'utf8', function (err, data) {
-                        var object = JSON.parse(data);
-                        assertBuilder.build(object);
+                        object = JSON.parse(data);
+                        var defer = assertBuilder.buildTestSequence(object);
+
+                        defer.then(function (obj) {
+                            console.log(obj.dones, obj.errors);
+                            channel.ack(message);
+
+                            console.log("[x] Done");
+                        });
                     });
                 }
                 catch(ex) {
@@ -56,10 +65,7 @@ var queueConfiguration = {
                     return;
                 }
 
-                setTimeout(function () {
-                    console.log("[x] Done");
-                    channel.ack(message);
-                }, seconds * 1000);
+
             };
         });
     }).then(null, console.warn);

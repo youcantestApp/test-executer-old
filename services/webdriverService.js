@@ -8,7 +8,7 @@ var q = require('q');
 
 var options = {
     desiredCapabilities: {
-        browserName: 'phantomjs'
+        browserName: 'chrome'
     }
 };
 
@@ -131,12 +131,46 @@ var WebDriveService = (function () {
         return defer.promise;
     };
 
+    WebDriveService.prototype.redirectToUrl = function (assert) {
+        var defer = q.defer();
+
+        //pauseState(5000).then(function() {
+            getClient().url(function (err, expected) {
+                console.log("got url");
+                if (err) defer.reject("error");
+
+                else {
+                    if (expected.value.split('?')[0] == assert.value)
+                        defer.resolve("url is ok");
+                    else
+                        defer.reject("url wasnt as expected");
+                }
+            });
+       // });
+
+        return defer.promise;
+    };
+
+    function pauseState(amountOfTime) {
+        var defer = q.defer();
+
+        getClient().pause(amountOfTime).then(function() {
+            defer.resolve('paused for' + amountOfTime);
+
+        }, function () {
+            defer.reject('fail on pause');
+        });
+
+        return defer.promise;
+    }
+
+
     WebDriveService.prototype.done = function () {
         var defer = q.defer();
 
         var doneFn = function () {
             console.log("done");
-            defer.resolve('finished');
+            return defer.resolve('finished');
         };
 
         getClient().call(doneFn);

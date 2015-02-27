@@ -2,10 +2,6 @@
  * Created by gbomfim on 12/10/14.
  */
 var WebDriverService = require('./webdriverService');
-var chai = require('chai'),
-    assert = chai.assert,
-    expect = chai.expect;
-
 var q = require('q');
 
 
@@ -40,9 +36,12 @@ function executeTestSequence(object) {
                 var localPromise = q.defer();
                 webdriver[action.type](_action).then(function (res) {
                     dones.push(res);
+
                     localPromise.resolve(res);
                 },function(reason){
                     errors.push(reason);
+
+                    localPromise.resolve(reason);
                 });
 
                 return localPromise.promise;
@@ -59,9 +58,12 @@ function executeTestSequence(object) {
                 var localPromise = q.defer();
                 webdriver[assert.type](_assert).then(function (res) {
                     dones.push(res);
+
                     localPromise.resolve(res);
                 },function(reason){
                     errors.push(reason);
+
+                    localPromise.resolve(reason);
                 });
 
                 return localPromise.promise;
@@ -91,6 +93,7 @@ function executeTestSequence(object) {
     })();
 
     var result = q();
+
     sequencePromises.forEach(function(fn) {
         result = result.then(function () {
             fn();
@@ -109,8 +112,6 @@ function executeTestSequence(object) {
 };
 
 function finishTestSequence() {
-    "use strict";
-
     return webdriver.end();
 }
 

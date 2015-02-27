@@ -2,12 +2,17 @@
 // Process tasks from the work queue
 var amqp = require('amqplib');
 
-var assertBuilder = require('./services/assertBuilderService');
 var fs = require('fs');
 var q = require('q');
 //CONFIGS
 
+var assertBuilder = require('./services/assertBuilderService');
+var testRepository = require('./repositories/testRepository');
+var resultPersistenceService = require('./services/testResultPersistenceService');
+
+
 var PREFETCH_NUMBER = 1;
+
 var queueConfiguration = {
     name: "test_queue",
     options: {
@@ -42,29 +47,45 @@ var queueConfiguration = {
             function doWorkFn(message) {
                 console.log(" [x] message received");
 
-                var body = message.content.toString();
+                var bodyStr = message.content.toString();
+
+                var messageContent = JSON.parse(bodyStr);
+
+                if(!messageContent || !messageContent.testId) {
+                    throw "undefined testId";
+                    return;
+                }
 
                 try {
-                    fs.readFile('./dummy_data/first_object_attempt.json', 'utf8', function (err, data) {
-                        var object = JSON.parse(data);
+                    //getting test from db
+                    testRepository.getById(messageContent.testId).then(function(object) {
+                        if(object.length == 0)
+                            throw "error to get test";
+
                         var defer = assertBuilder.executeTestSequence(object);
 
                         defer.then(function (obj) {
                             console.log(obj.dones, obj.errors);
+
+                            console.log("terminei todos os testes");
+
+                            resultPersistenceService.saveResults(messageContent.suiteId, messageContent.testId, obj.dones, obj.errors);
+
                             channel.ack(message);
 
                             console.log("[x] Done");
-                        }).then(function () {
-                            "use strict";
+                        },function() { console.log("fuck!"); }).then(function () {
                             assertBuilder.finishTestSequence();
                         });
+
+                    }, function () {
+                        throw "error to get test";
                     });
                 }
                 catch(ex) {
                     console.log("some error found", ex);
                     return;
                 }
-
 
             };
         });

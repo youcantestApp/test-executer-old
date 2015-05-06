@@ -7,112 +7,112 @@ var q = require('q');
 
 var webdriver;
 var initialize = (function () {
-return function() {
-    webdriver = new WebDriverService().getInstance();
-    webdriver.init();
-}
+	return function () {
+		webdriver = new WebDriverService().getInstance();
+		webdriver.init();
+	}
 })();
 
 function executeTestSequence(object) {
-    initialize();
+	initialize();
 
-    var finishTestExecutionDefer = q.defer();
+	var finishTestExecutionDefer = q.defer();
 
-    var sequencePromises = [];
+	var sequencePromises = [];
 
-    var errors = [],
-        dones = [];
+	var errors = [],
+		dones = [];
 
-    var initialFn = function () {
-        console.log("primeiro passo");
-        return webdriver.openUrl(object.context.url);
-    };
-    sequencePromises.push(initialFn);
+	var initialFn = function () {
+		console.log("primeiro passo");
+		return webdriver.openUrl(object.context.url);
+	};
+	sequencePromises.push(initialFn);
 
-    object.actions.forEach(function(action) {
-        var fn = (function () {
-            var _action = action;
-            return function () {
-                var localPromise = q.defer();
-                webdriver[action.type](_action).then(function (res) {
-                    dones.push(res);
+	object.actions.forEach(function (action) {
+		var fn = (function () {
+			var _action = action;
+			return function () {
+				var localPromise = q.defer();
+				webdriver[action.type](_action).then(function (res) {
+					dones.push(res);
 
-                    localPromise.resolve(res);
-                },function(reason){
-                    errors.push(reason);
+					localPromise.resolve(res);
+				}, function (reason) {
+					errors.push(reason);
 
-                    localPromise.resolve(reason);
-                });
+					localPromise.resolve(reason);
+				});
 
-                return localPromise.promise;
-            }
-        })();
+				return localPromise.promise;
+			}
+		})();
 
-        sequencePromises.push(fn);
-    });
+		sequencePromises.push(fn);
+	});
 
-    object.asserts.forEach(function (assert) {
-        var fn = (function () {
-            var _assert = assert;
-            return function() {
-                var localPromise = q.defer();
-                webdriver[assert.type](_assert).then(function (res) {
-                    dones.push(res);
+	object.asserts.forEach(function (assert) {
+		var fn = (function () {
+			var _assert = assert;
+			return function () {
+				var localPromise = q.defer();
+				webdriver[assert.type](_assert).then(function (res) {
+					dones.push(res);
 
-                    localPromise.resolve(res);
-                },function(reason){
-                    errors.push(reason);
+					localPromise.resolve(res);
+				}, function (reason) {
+					errors.push(reason);
 
-                    localPromise.resolve(reason);
-                });
+					localPromise.resolve(reason);
+				});
 
-                return localPromise.promise;
-            }
-        })();
+				return localPromise.promise;
+			}
+		})();
 
-        sequencePromises.push(fn);
-    });
+		sequencePromises.push(fn);
+	});
 
 
-    var last = function() {
-        return webdriver.done().then(function (res) {
-            console.log("ultimo passo");
-            finishTestExecutionDefer.resolve({ dones: dones, errors: errors });
-        },function(reason){
-            console.log(reason);
-        });
-    };
+	var last = function () {
+		return webdriver.done().then(function (res) {
+			console.log("ultimo passo");
+			finishTestExecutionDefer.resolve({dones: dones, errors: errors});
+		}, function (reason) {
+			console.log(reason);
+		});
+	};
 
-    sequencePromises.push(last);
+	sequencePromises.push(last);
 
-    var initialDefer = q.defer();
+	var initialDefer = q.defer();
 
-    var promise = (function () {
-        console.log("initial");
-        return initialDefer.promise;
-    })();
+	var promise = (function () {
+		console.log("initial");
+		return initialDefer.promise;
+	})();
 
-    var result = q();
+	var result = q();
 
-    sequencePromises.forEach(function(fn) {
-        result = result.then(function () {
-            fn();
-        });
-    });
+	sequencePromises.forEach(function (fn) {
+		result = result.then(function () {
+			fn();
+		});
+	});
 
-    console.log("chained...will start in 1 seconds");
+	console.log("chained...will start in 1 seconds");
 
-    promise.then(result);
+	promise.then(result);
 
-    setTimeout(function () {
-        initialDefer.resolve();
-    }, 1000);
+	setTimeout(function () {
+		initialDefer.resolve();
+	}, 1000);
 
-    return finishTestExecutionDefer.promise;
+	return finishTestExecutionDefer.promise;
 };
 
 function finishTestSequence() {
-    return webdriver.end();
+	return webdriver.end();
 }
 
 

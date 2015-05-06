@@ -1,22 +1,16 @@
-
 var testResultRepository = require('../repositories/testResultRepository');
 
 
-function persistResults(suiteId, testId, dones, fails) {
-    var executionDate = new Date();
+function persistResults(scheduleId, dones, fails) {
 
-    var resultObject = {};
+	var resultObject = {};
 
-    resultObject.suiteId = 1;
+	resultObject.scheduleId = scheduleId;
 
-    resultObject.executionDate = executionDate;
+	resultObject.passed = dones;
+	resultObject.fails = fails;
 
-    resultObject.testId = testId;
-
-    resultObject.passed = dones;
-    resultObject.fails = fails;
-
-    return testResultRepository.saveOne(resultObject);
+	return testResultRepository.saveOne(resultObject);
 }
 
 

@@ -1,10 +1,8 @@
-/**
- * Created by guilherme on 12/22/14.
- */
 var base = require("./baseRepository"), q = require('q');
+
 var ObjectID = require("mongodb").ObjectID;
 
-var collectionName = 'testResults';
+var collectionName = 'schedules';
 
 var getById = function getById(id) {
 	var defer = q.defer();
@@ -13,43 +11,19 @@ var getById = function getById(id) {
 		var collection = db.collection(collectionName);
 
 		collection.find({_id: ObjectID.createFromHexString(id)}).toArray(function (err, docs) {
-			if (err != null) {
+			if (err != null || !docs.length) {
 				return defer.reject("unable to find -> error:" + err.message);
 			}
 
 			base.close();
 
-			defer.resolve(docs);
+
+			defer.resolve(docs[0]);
 		});
 	});
 
 	return defer.promise;
-}
-
-var getAllByIds = function getAllBySuite(listOfIds) {
-	var defer = q.defer();
-
-	base.connect().then(function (db) {
-		var collection = db.collection(collectionName);
-
-		var listOfObjIds = [];
-		listOfIds.forEach(function (element) {
-			listOfObjIds.push(ObjectID.createFromHexString(element));
-		});
-
-		collection.find({_id: {'$in': listOfObjIds}}).toArray(function (err, docs) {
-			if (err != null) {
-				return defer.reject("unable to find -> error:" + err.message);
-			}
-
-			base.close();
-
-			defer.resolve(docs);
-		});
-	});
-
-	return defer.promise;
-}
+};
 
 function saveOne(object) {
 	var defer = q.defer();
@@ -58,7 +32,7 @@ function saveOne(object) {
 		var collection = db.collection(collectionName);
 
 		if(object._id) {
-			collection.update({_id: object._id}, object, function (err, record) {
+			collection.update({ _id: object._id }, object, function (err, record) {
 				if (err || !record.length)
 					return defer.reject(err);
 
@@ -70,10 +44,9 @@ function saveOne(object) {
 				if (err || !record.length)
 					return defer.reject(err);
 
-				defer.resolve(record[0]._id.toString());
+				defer.resolve(record[0]._id.tostring());
 			});
 		}
-
 	});
 
 	return defer.promise;
@@ -81,5 +54,4 @@ function saveOne(object) {
 
 
 module.exports.getById = getById;
-module.exports.getAllByIds = getAllByIds;
 module.exports.saveOne = saveOne;

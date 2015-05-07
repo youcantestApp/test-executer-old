@@ -8,8 +8,9 @@ var q = require('q');
 
 var options = {
 	desiredCapabilities: {
-		browserName: 'chrome'
-	}
+		browserName: 'phantomjs'
+	},
+	port:4444
 };
 
 var WebDriveService = (function () {
@@ -41,13 +42,16 @@ var WebDriveService = (function () {
 	WebDriveService.prototype.init = function () {
 		getClient().init();
 
+		getClient().windowHandleSize({width: 1920, height: 1080});
 		return this;
 	};
 
 	WebDriveService.prototype.openUrl = function (url) {
 		var defer = q.defer();
 		getClient().url(url, function (err, res) {
-			if (res && res.state == "success")
+			getClient().saveScreenshot('./snapshot.png');
+
+			if (res)
 				defer.resolve(res.state);
 			else
 				defer.reject(err);
@@ -139,10 +143,10 @@ var WebDriveService = (function () {
 			if (err) defer.reject("error");
 
 			else {
-				if (expected.value.split('?')[0] == assert.value)
+				if (expected.value.indexOf(assert.value) > -1)
 					defer.resolve("url is ok");
 				else
-					defer.reject("url wasnt as expected");
+					defer.reject("url isnt as expected");
 			}
 		});
 

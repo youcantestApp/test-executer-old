@@ -1,4 +1,4 @@
-var _ = requide('lodash');
+var _ = require('lodash');
 
 var testResultRepository = require('../repositories/testResultRepository');
 

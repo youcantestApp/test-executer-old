@@ -42,7 +42,7 @@ function execute(testId) {
 };
 
 (function (queueContext) {
-	queueContext.connect('amqp://localhost').then(function (conn) {
+	queueContext.connect('amqp://admin:admin@rabbit').then(function (conn) {
 		process.once('SIGINT', function () {
 			conn.close();
 		});

@@ -4,7 +4,7 @@ var MongoClient = require('mongodb').MongoClient,
 var databaseName = 'youcantest_db';
 
 // Connection URL
-var url = 'mongodb://localhost:27017/' + databaseName;
+var url = 'mongodb://admin:admin@mongodb:27017/' + databaseName;
 
 var dbInstance;
 // Use connect method to connect to the Server

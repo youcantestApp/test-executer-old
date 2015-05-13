@@ -78,10 +78,10 @@ function saveOne(object) {
 		var collection = db.collection(collectionName);
 
 		collection.insert(object, function (err, record) {
-			if (err)
+			if (err || !record.result.ok)
 				return defer.reject(err);
 
-			defer.resolve(record._id);
+			defer.resolve(record.ops[0]._id);
 		});
 	});
 

@@ -59,18 +59,18 @@ function saveOne(object) {
 
 		if(object._id) {
 			collection.update({_id: object._id}, object, function (err, record) {
-				if (err || !record.length)
+				if (err || !record.result.ok)
 					return defer.reject(err);
 
-				defer.resolve(record[0]._id.tostring());
+				defer.resolve(record.ops[0]._id.tostring());
 			});
 		}
 		else {
 			collection.insert(object, function (err, record) {
-				if (err || !record.length)
+				if (err || !record.result.ok)
 					return defer.reject(err);
 
-				defer.resolve(record[0]._id.toString());
+				defer.resolve(record.ops[0]._id.toString());
 			});
 		}
 

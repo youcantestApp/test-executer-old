@@ -42,15 +42,13 @@ var WebDriveService = (function () {
 	WebDriveService.prototype.init = function () {
 		getClient().init();
 
-		getClient().windowHandleSize({width: 1920, height: 1080});
+		getClient().windowHandleSize({width: 1024, height: 768});
 		return this;
 	};
 
 	WebDriveService.prototype.openUrl = function (url) {
 		var defer = q.defer();
 		getClient().url(url, function (err, res) {
-			getClient().saveScreenshot('./snapshot.png');
-
 			if (res)
 				defer.resolve(res.state);
 			else

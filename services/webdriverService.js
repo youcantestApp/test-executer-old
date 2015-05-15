@@ -182,6 +182,7 @@ var WebDriveService = (function () {
 		var defer = q.defer();
 
 		getClient().end(function () {
+			singletonService = undefined;
 			console.log("closed");
 			defer.resolve('closed');
 		});

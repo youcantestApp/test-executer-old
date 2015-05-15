@@ -4,17 +4,11 @@
 var WebDriverService = require('./webdriverService');
 var q = require('q');
 
-
 var webdriver;
-var initialize = (function () {
-	return function () {
-		webdriver = new WebDriverService().getInstance();
-		webdriver.init();
-	}
-})();
 
 function executeTestSequence(object) {
-	initialize();
+	webdriver = new WebDriverService().getInstance();
+	webdriver.init();
 
 	var finishTestExecutionDefer = q.defer();
 
@@ -112,7 +106,8 @@ function executeTestSequence(object) {
 };
 
 function finishTestSequence() {
-	return webdriver.end();
+console.log("VOU FEHCAR NO ASSERBUILDER");
+	return webdriver.end()
 }
 
 

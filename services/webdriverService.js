@@ -10,6 +10,9 @@ var options = {
 	desiredCapabilities: {
 		browserName: 'phantomjs'
 	},
+	waitForTimeout: 500,
+	logLevel: 'verbose',
+	logColor: true,
 	port:4444
 };
 
@@ -26,15 +29,13 @@ var WebDriveService = (function () {
 	};
 
 	WebDriveService.prototype.getInstance = function () {
-		if (!singletonService)
-			singletonService = new WebDriveService();
+		singletonService = new WebDriveService();
 
 		return this;
 	};
 
 	WebDriveService.prototype.dispose = function () {
-		if (getClient())
-			this.getClient().end();
+		getClient().end();
 
 		return this;
 	};
@@ -181,11 +182,21 @@ var WebDriveService = (function () {
 	WebDriveService.prototype.end = function () {
 		var defer = q.defer();
 
-		getClient().end(function () {
-			singletonService = undefined;
+		console.log("VOU FECHAR NO WD");
+
+		getClient().deleteCookie().sessions(function(err, sessions) {
+			console.log("sessions before");
+			console.log(2, sessions);
+		    });
+
+
+		getClient().deleteCookie().end(function () {
 			console.log("closed");
 			defer.resolve('closed');
-		});
+		}).sessions(function(err, sessions) {
+			console.log("sessions after");
+			console.log(2, sessions);
+		    });
 
 		return defer.promise;
 	};

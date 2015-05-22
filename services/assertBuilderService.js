@@ -35,11 +35,23 @@ function executeTestSequence(object) {
 			return function () {
 				var localPromise = q.defer();
 				webdriver[action.type](_action).then(function (res) {
-					dones.push(res);
+					var data = {
+						action: action,
+						success: true,
+						result: res
+					};
+
+					dones.push(data);
 
 					localPromise.resolve(res);
 				}, function (reason) {
-					errors.push(reason);
+					var data = {
+						action: action,
+						success: false,
+						reason: reason
+					};
+
+					errors.push(data);
 
 					localPromise.resolve(reason);
 				});
@@ -57,11 +69,23 @@ function executeTestSequence(object) {
 			return function () {
 				var localPromise = q.defer();
 				webdriver[assert.type](_assert).then(function (res) {
-					dones.push(res);
+					var data = {
+						assert: assert,
+						success: true,
+						result: res
+					};
+
+					dones.push(data);
 
 					localPromise.resolve(res);
 				}, function (reason) {
-					errors.push(reason);
+					var data = {
+						assert: assert,
+						success: false,
+						reason: reason
+					};
+
+					errors.push(data);
 
 					localPromise.resolve(reason);
 				});

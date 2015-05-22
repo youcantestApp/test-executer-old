@@ -4,19 +4,15 @@ var testResultRepository = require('../repositories/testResultRepository');
 
 
 
-function persistResults(scheduleId, dones, fails) {
+function persistResults(scheduleId, actions, asserts) {
 
 	var resultObject = {};
 
 	resultObject.scheduleId = scheduleId;
 
-	resultObject.passed = _.map(dones, function(element) {
-		return {message : element};
-	});
+	resultObject.actions = actions;
 
-	resultObject.fails = _.map(fails, function(element) {
-		return {message : element};
-	});
+	resultObject.asserts = asserts;
 
 	return testResultRepository.saveOne(resultObject);
 }

@@ -4,23 +4,24 @@ var testResultRepository = require('../repositories/testResultRepository');
 
 
 
-function persistResults(scheduleId, actions, asserts) {
+function persistResults(scheduleId, testResult) {
 
 	var resultObject = {};
 
 	resultObject.scheduleId = scheduleId;
+	resultObject.testName = testResult.testName;
 
-	resultObject.actions = actions;
-	var successActions  = _.filter(actions, function (element) {
+	resultObject.actions = testResult.actionResults;
+	var successActions  = _.filter(testResult.actionResults, function (element) {
 		return element.success;
 	});
 
-	resultObject.asserts = asserts;
-	var successAsserts = _.filter(asserts, function (element) {
+	resultObject.asserts = testResult.assertResults;
+	var successAsserts = _.filter(testResult.assertResults, function (element) {
 		return element.success;
 	});
 
-	resultObject.testSucceed = (actions.length === successActions.length && asserts.length === successAsserts.length);
+	resultObject.testSucceed = (testResult.actionResults.length === successActions.length && testResult.assertResults.length === successAsserts.length);
 
 	return testResultRepository.saveOne(resultObject);
 }

@@ -14,8 +14,8 @@ function executeTestSequence(object) {
 
 	var sequencePromises = [];
 
-	var errors = [],
-		dones = [];
+	var assertResults = [],
+		actionResults = [];
 
 	var initialFn = function () {
 		console.log("primeiro passo");
@@ -35,7 +35,7 @@ function executeTestSequence(object) {
 						result: res
 					};
 
-					dones.push(data);
+					actionResults.push(data);
 
 					localPromise.resolve(res);
 				}, function (reason) {
@@ -45,7 +45,7 @@ function executeTestSequence(object) {
 						reason: reason
 					};
 
-					errors.push(data);
+					actionResults.push(data);
 
 					localPromise.resolve(reason);
 				});
@@ -69,7 +69,7 @@ function executeTestSequence(object) {
 						result: res
 					};
 
-					dones.push(data);
+					assertResults.push(data);
 
 					localPromise.resolve(res);
 				}, function (reason) {
@@ -79,7 +79,7 @@ function executeTestSequence(object) {
 						reason: reason
 					};
 
-					errors.push(data);
+					assertResults.push(data);
 
 					localPromise.resolve(reason);
 				});
@@ -95,7 +95,7 @@ function executeTestSequence(object) {
 	var last = function () {
 		return webdriver.done().then(function (res) {
 			console.log("ultimo passo");
-			finishTestExecutionDefer.resolve({dones: dones, errors: errors});
+			finishTestExecutionDefer.resolve({actionResults: actionResults, assertResults: assertResults});
 		}, function (reason) {
 			console.log(reason);
 		});

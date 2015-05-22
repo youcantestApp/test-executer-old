@@ -26,7 +26,7 @@ function execute(testId) {
 		var defer = assertBuilder.executeTestSequence(object);
 
 		return defer.then(function (obj) {
-			console.log(obj.dones, obj.errors);
+			console.log(obj.actionResults, obj.assertResults);
 
 			console.log("terminei todos os testes");
 			console.log("[x] Done");
@@ -83,9 +83,9 @@ function execute(testId) {
 					scheduleRepository.getById(messageContent.scheduleId).then(function (data) {
 						if (data.length == 0 || !data.testId)
 							throw "error to get schedule";
-						execute(data.testId).then(function (obj) {
+						execute(data.testId).then(function (testResult) {
 
-							resultPersistenceService.saveResults(messageContent.scheduleId, obj.dones, obj.errors).then(function(id) {
+							resultPersistenceService.saveResults(messageContent.scheduleId, testResult).then(function(id) {
 								data.resultId = id;
 								data.executionDate = new Date();
 								scheduleRepository.saveOne(data);

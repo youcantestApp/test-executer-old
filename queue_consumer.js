@@ -31,6 +31,8 @@ function execute(testId) {
 			console.log("terminei todos os testes");
 			console.log("[x] Done");
 
+			obj.testName = object.name;
+
 			return obj;
 		}, function () {
 			console.log("fuck!");

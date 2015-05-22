@@ -11,8 +11,16 @@ function persistResults(scheduleId, actions, asserts) {
 	resultObject.scheduleId = scheduleId;
 
 	resultObject.actions = actions;
+	var successActions  = _.filter(actions, function (element) {
+		return element.success;
+	});
 
 	resultObject.asserts = asserts;
+	var successAsserts = _.filter(asserts, function (element) {
+		return element.success;
+	});
+
+	resultObject.testSucceed = (actions.length === successActions.length && asserts.length === successAsserts.length);
 
 	return testResultRepository.saveOne(resultObject);
 }

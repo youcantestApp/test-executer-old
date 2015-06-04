@@ -4,10 +4,11 @@ var testResultRepository = require('../repositories/testResultRepository');
 
 
 
-function persistResults(scheduleId, testResult) {
+function persistResults(scheduleId, testResult, user) {
 
 	var resultObject = {};
 
+	resultObject.user = user;
 	resultObject.scheduleId = scheduleId;
 	resultObject.testName = testResult.testName;
 

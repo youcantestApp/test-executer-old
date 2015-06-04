@@ -44,7 +44,9 @@ function execute(testId) {
 };
 
 (function (queueContext) {
+	//queueContext.connect('amqp://guest:guest@rabbit').then(function (conn) {
 	queueContext.connect('amqp://admin:admin@rabbit').then(function (conn) {
+
 		process.once('SIGINT', function () {
 			conn.close();
 		});
@@ -83,9 +85,12 @@ function execute(testId) {
 					scheduleRepository.getById(messageContent.scheduleId).then(function (data) {
 						if (data.length == 0 || !data.testId)
 							throw "error to get schedule";
+
+						var user = data.user;
+
 						execute(data.testId).then(function (testResult) {
 
-							resultPersistenceService.saveResults(messageContent.scheduleId, testResult).then(function(id) {
+							resultPersistenceService.saveResults(messageContent.scheduleId, testResult, user).then(function (id) {
 								data.resultId = id;
 								data.executionDate = new Date();
 								scheduleRepository.saveOne(data);

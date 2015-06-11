@@ -16,21 +16,18 @@ var options = {
 	port:4444
 };
 
-var WebDriveService = (function () {
-	var singletonService;
+var WBService = (function () {
 	var clientInstance;
 
 	function WebDriveService() {
-		clientInstance = webdriverio.remote(options);
-	};
+		clientInstance = webdriverio.remote(options).init();
+	}
 
 	function getClient() {
 		return clientInstance;
 	};
 
 	WebDriveService.prototype.getInstance = function () {
-		singletonService = new WebDriveService();
-
 		return this;
 	};
 
@@ -41,9 +38,6 @@ var WebDriveService = (function () {
 	};
 
 	WebDriveService.prototype.init = function () {
-		getClient().init();
-
-		getClient().windowHandleSize({width: 1024, height: 768});
 		return this;
 	};
 
@@ -237,7 +231,7 @@ var WebDriveService = (function () {
 		return defer.promise;
 	};
 
-	return WebDriveService;
+	return new WebDriveService();
 })();
 
-module.exports = WebDriveService;
+module.exports = WBService;

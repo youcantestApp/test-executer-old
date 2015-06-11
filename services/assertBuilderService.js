@@ -7,8 +7,7 @@ var q = require('q');
 var webdriver;
 
 function executeTestSequence(object) {
-	webdriver = new WebDriverService().getInstance();
-	webdriver.init();
+	webdriver = WebDriverService.getInstance();
 
 	var finishTestExecutionDefer = q.defer();
 
@@ -21,41 +20,44 @@ function executeTestSequence(object) {
 		console.log("primeiro passo");
 		return webdriver.openUrl(object.context.url);
 	};
+
 	sequencePromises.push(initialFn);
 
-	object.actions.forEach(function (action) {
-		var fn = (function () {
-			var _action = action;
-			return function () {
-				var localPromise = q.defer();
-				webdriver[action.type](_action).then(function (res) {
-					var data = {
-						action: action,
-						success: true,
-						result: res
-					};
+	if(object.actions !== undefined && object.actions.length) {
+		object.actions.forEach(function (action) {
+			var fn = (function () {
+				var _action = action;
+				return function () {
+					var localPromise = q.defer();
+					webdriver[action.type](_action).then(function (res) {
+						var data = {
+							action: action,
+							success: true,
+							result: res
+						};
 
-					actionResults.push(data);
+						actionResults.push(data);
 
-					localPromise.resolve(res);
-				}, function (reason) {
-					var data = {
-						action: action,
-						success: false,
-						reason: reason
-					};
+						localPromise.resolve(res);
+					}, function (reason) {
+						var data = {
+							action: action,
+							success: false,
+							reason: reason
+						};
 
-					actionResults.push(data);
+						actionResults.push(data);
 
-					localPromise.resolve(reason);
-				});
+						localPromise.resolve(reason);
+					});
 
-				return localPromise.promise;
-			}
-		})();
+					return localPromise.promise;
+				}
+			})();
 
-		sequencePromises.push(fn);
-	});
+			sequencePromises.push(fn);
+		});
+	}
 
 	object.asserts.forEach(function (assert) {
 		var fn = (function () {

@@ -134,6 +134,42 @@ var WebDriveService = (function () {
 		return defer.promise;
 	};
 
+	WebDriveService.prototype.isElementVisible = function (assert) {
+		var defer = q.defer();
+
+		getClient().isVisible(assert.selector, function (err, visible) {
+			console.log("checked if element is visible");
+			if (err) defer.reject("error");
+
+			else {
+				if (visible)
+					defer.resolve("element is visible in page");
+				else
+					defer.reject("element isnt visible in page");
+			}
+		});
+
+		return defer.promise;
+	};
+
+	WebDriveService.prototype.isElementExists = function (assert) {
+		var defer = q.defer();
+
+		getClient().isExisting(assert.selector, function (err, existing) {
+			console.log("checked if element existing");
+			if (err) defer.reject("error");
+
+			else {
+				if (existing)
+					defer.resolve("element exists in page");
+				else
+					defer.reject("element not exists in page");
+			}
+		});
+
+		return defer.promise;
+	};
+
 	WebDriveService.prototype.checkUrl = function (assert) {
 		var defer = q.defer();
 

@@ -21,6 +21,14 @@ var queueConfiguration = {
 	}
 };
 
+var errorQueueConfiguration = {
+	name: "youcantest.test_queue_error",
+	options: {
+		durable: false
+	}
+};
+
+
 function execute(testId) {
 	return testRepository.getById(testId).then(function (object) {
 		try {
@@ -36,7 +44,7 @@ function execute(testId) {
 
 				return obj;
 			}, function (err) {
-				console.log("fuck!");
+				console.log("dammn!");
 				throw err;
 			}).then(function (obj) {
 				assertBuilder.finishTestSequence();
@@ -53,105 +61,87 @@ function execute(testId) {
 	});
 };
 
-function publishToErrorQueue(conn, message) {
-	var errorQueueConfiguration = {
-		name: "youcantest.test_queue_error",
-		options: {
-			durable: false
-		}
-	};
+//function publishToErrorQueue(scheduleId, errorMessage) {
+//
+//
+//	var bodyStr = message.content.toString();
+//
+//	var ok = conn.createChannel();
+//	ok = ok.then(function(ch) {
+//		var queue = ch.assertQueue(errorQueueConfiguration.name, errorQueueConfiguration.options);
+//		ch.sendToQueue(errorQueueConfiguration.name, new Buffer(bodyStr));
+//	});
+//	return ok;
+//}
 
-	var bodyStr = message.content.toString();
-
-	var ok = conn.createChannel();
-	ok = ok.then(function(ch) {
-		var queue = ch.assertQueue(errorQueueConfiguration.name, errorQueueConfiguration.options);
-		ch.sendToQueue(errorQueueConfiguration.name, new Buffer(bodyStr));
-	});
-	return ok;
+function getConnection() {
+	//return amqp.connect('amqp://guest:guest@rabbit');
+	return amqp.connect('amqp://admin:admin@rabbit');
 }
 
+function getQueue(channel, configuration) {
+	var queue = channel.assertQueue(configuration.name, configuration.options);
 
-(function (queueContext) {
-	//queueContext.connect('amqp://guest:guest@rabbit').then(function (conn) {
-	queueContext.connect('amqp://admin:admin@rabbit').then(function (conn) {
+	return queue.then(function () {
+		channel.prefetch(PREFETCH_NUMBER);
+	});
+}
 
+function queueHandler(scheduleId) {
+	scheduleRepository.getById(scheduleId).then(function (data) {
+		if (data.length == 0 || !data.testId) {
+			throw "error to get schedule";
+		}
+
+		var user = data.user;
+
+		execute(data.testId).then(function (testResult) {
+			resultPersistenceService.saveResults(scheduleId, testResult, user).then(function (id) {
+				data.resultId = id;
+				data.executionDate = new Date();
+				scheduleRepository.saveOne(data);
+			});
+
+			console.log("scheduleId : " + scheduleId + "  done");
+		}, function (err) {
+			throw "error to execute test";
+		});
+	}, function () {
+		throw "error to get test";
+	});
+};
+
+
+(function () {
+	getConnection().then(function (conn) {
 		process.once('SIGINT', function () {
 			conn.close();
 		});
 
 		return conn.createChannel().then(function (channel) {
-			var queue = channel.assertQueue(queueConfiguration.name, queueConfiguration.options);
-
-			queue = queue.then(function () {
-				channel.prefetch(PREFETCH_NUMBER);
-			});
-			queue = queue.then(function () {
-				try {
-					channel.consume(queueConfiguration.name, doWorkFn, {
-							noAck: false
-						}
-					);
-				}
-				catch(message) {
-					console.log('[-] Error on process message...');
-
-					channel.ack(message);
-					if(typeof message === 'object') {
-						publishToErrorQueue(conn, message);
-						console.log('[-] published to error queue.');
-					}
-				}
-
+			getQueue(channel, queueConfiguration).then(function () {
 				console.log(" [*] Waiting for messages. To exit press CTRL+C");
+
+				channel.consume(queueConfiguration.name, function(message) {
+					console.log(" [x] message received");
+
+					var bodyStr = message.content.toString();
+					var messageContent = JSON.parse(bodyStr);
+
+					if (!messageContent || !messageContent.scheduleId) {
+						console.log('error on parse message');
+						return;
+					}
+
+					try {
+						queueHandler(messageContent.scheduleId);
+					}
+					catch(error) {
+						console.log('error on handle message');
+						return;
+					}
+				},{ noAck: true });
 			});
-
-			return queue;
-
-			function doWorkFn(message) {
-				console.log(" [x] message received");
-
-				var bodyStr = message.content.toString();
-
-				var messageContent = JSON.parse(bodyStr);
-
-				if (!messageContent || !messageContent.scheduleId) {
-					throw message;
-					return;
-				}
-
-				try {
-					//getting test from db
-					scheduleRepository.getById(messageContent.scheduleId).then(function (data) {
-						if (data.length == 0 || !data.testId)
-							throw "error to get schedule";
-
-						var user = data.user;
-
-						execute(data.testId).then(function (testResult) {
-
-							resultPersistenceService.saveResults(messageContent.scheduleId, testResult, user).then(function (id) {
-								data.resultId = id;
-								data.executionDate = new Date();
-								scheduleRepository.saveOne(data);
-							});
-
-							channel.ack(message);
-							console.log("scheduleId : " + messageContent.scheduleId + "  done");
-						}, function (err) {
-							throw "error to get test";
-						});
-					}, function () {
-						throw "error to get test";
-					});
-				}
-				catch (ex) {
-					throw message;
-					return;
-				}
-
-			};
 		});
 	}).then(null, console.warn);
-
-})(amqp);
+})();

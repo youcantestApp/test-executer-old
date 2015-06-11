@@ -7,7 +7,7 @@ var q = require('q');
 var webdriver;
 
 function executeTestSequence(object) {
-	webdriver = WebDriverService.getInstance();
+	webdriver = new WebDriverService.WDService();
 
 	var finishTestExecutionDefer = q.defer();
 
@@ -23,7 +23,7 @@ function executeTestSequence(object) {
 
 	sequencePromises.push(initialFn);
 
-	if(object.actions !== undefined && object.actions.length) {
+	if (object.actions !== undefined && object.actions.length) {
 		object.actions.forEach(function (action) {
 			var fn = (function () {
 				var _action = action;
@@ -132,7 +132,7 @@ function executeTestSequence(object) {
 };
 
 function finishTestSequence() {
-console.log("VOU FEHCAR NO ASSERBUILDER");
+	console.log("VOU FEHCAR NO ASSERBUILDER");
 	return webdriver.end()
 }
 

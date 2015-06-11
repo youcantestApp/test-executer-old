@@ -23,25 +23,54 @@ var queueConfiguration = {
 
 function execute(testId) {
 	return testRepository.getById(testId).then(function (object) {
-		var defer = assertBuilder.executeTestSequence(object);
+		try {
+			var defer = assertBuilder.executeTestSequence(object);
 
-		return defer.then(function (obj) {
-			console.log(obj.actionResults, obj.assertResults);
+			return defer.then(function (obj) {
+				console.log(obj.actionResults, obj.assertResults);
 
-			console.log("terminei todos os testes");
-			console.log("[x] Done");
+				console.log("terminei todos os testes");
+				console.log("[x] Done");
 
-			obj.testName = object.name;
+				obj.testName = object.name;
 
-			return obj;
-		}, function () {
-			console.log("fuck!");
-		}).then(function (obj) {
-			assertBuilder.finishTestSequence();
-			return obj;
-		});
+				return obj;
+			}, function (err) {
+				console.log("fuck!");
+				throw err;
+			}).then(function (obj) {
+				assertBuilder.finishTestSequence();
+				return obj;
+			});
+		}
+		catch (error) {
+			console.log('error on executeTestSequence', error);
+
+			throw error;
+		}
+	}, function (err) {
+		console.log('error on testrepository get');
 	});
 };
+
+function publishToErrorQueue(conn, message) {
+	var errorQueueConfiguration = {
+		name: "youcantest.test_queue_error",
+		options: {
+			durable: false
+		}
+	};
+
+	var bodyStr = message.content.toString();
+
+	var ok = conn.createChannel();
+	ok = ok.then(function(ch) {
+		var queue = ch.assertQueue(errorQueueConfiguration.name, errorQueueConfiguration.options);
+		ch.sendToQueue(errorQueueConfiguration.name, new Buffer(bodyStr));
+	});
+	return ok;
+}
+
 
 (function (queueContext) {
 	//queueContext.connect('amqp://guest:guest@rabbit').then(function (conn) {
@@ -58,10 +87,21 @@ function execute(testId) {
 				channel.prefetch(PREFETCH_NUMBER);
 			});
 			queue = queue.then(function () {
-				channel.consume(queueConfiguration.name, doWorkFn, {
-						noAck: false
+				try {
+					channel.consume(queueConfiguration.name, doWorkFn, {
+							noAck: false
+						}
+					);
+				}
+				catch(message) {
+					console.log('[-] Error on process message...');
+
+					channel.ack(message);
+					if(typeof message === 'object') {
+						publishToErrorQueue(conn, message);
+						console.log('[-] published to error queue.');
 					}
-				);
+				}
 
 				console.log(" [*] Waiting for messages. To exit press CTRL+C");
 			});
@@ -76,7 +116,7 @@ function execute(testId) {
 				var messageContent = JSON.parse(bodyStr);
 
 				if (!messageContent || !messageContent.scheduleId) {
-					throw "undefined schedule";
+					throw message;
 					return;
 				}
 
@@ -106,7 +146,7 @@ function execute(testId) {
 					});
 				}
 				catch (ex) {
-					console.log("some error found", ex);
+					throw message;
 					return;
 				}
 

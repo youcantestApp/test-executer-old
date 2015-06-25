@@ -96,9 +96,10 @@ function queueHandler(scheduleId) {
 		var user = data.user;
 
 		execute(data.testId).then(function (testResult) {
-			resultPersistenceService.saveResults(scheduleId, testResult, user).then(function (id) {
+			var finishExecutionDate = new Date();
+			resultPersistenceService.saveResults(scheduleId, data.testId, testResult, finishExecutionDate, user).then(function (id) {
 				data.resultId = id;
-				data.executionDate = new Date();
+				data.executionDate = finishExecutionDate;
 				scheduleRepository.saveOne(data);
 			});
 

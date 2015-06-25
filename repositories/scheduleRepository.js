@@ -32,7 +32,7 @@ function saveOne(object) {
 		var collection = db.collection(collectionName);
 
 		if(object._id) {
-			collection.update({ _id: object._id }, object, function (err, record) {
+			collection.save({ _id: object._id }, object, function (err, record) {
 				if (err || !record.length)
 					return defer.reject(err);
 
